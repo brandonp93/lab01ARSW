@@ -35,20 +35,26 @@ public class HostBlackListsValidator {
      */
     public List<Integer> checkHost(String ipaddress, int n) throws InterruptedException{
         
-                
+             
         LinkedList<Integer> blackListOcurrences=new LinkedList<>();
+        
         ArrayList<IpMaliciosasThread> hilos = new ArrayList<>();
         
         int ocurrencesCount=0;        
         
         HostBlacklistsDataSourceFacade skds=HostBlacklistsDataSourceFacade.getInstance();
         
-        int checkedListsCount=0;        
+        int checkedListsCount=0;              
+        int rango;
         
-        int rango=skds.getRegisteredServersCount()/n;        
+        if(n%2!=0){
+            rango = skds.getRegisteredServersCount()/(n+1);
+        }else{
+            rango=skds.getRegisteredServersCount()/n;
+        }        
         
-        for(int i=0; i<n;i+=rango){
-            IpMaliciosasThread hilo = new IpMaliciosasThread(i,i+rango,ipaddress);            
+        for(int i=0; i < skds.getRegisteredServersCount() ; i+=rango){
+            IpMaliciosasThread hilo = new IpMaliciosasThread(i, i+rango, ipaddress, blackListOcurrences);            
             hilos.add(hilo);            
         }
         
@@ -59,6 +65,7 @@ public class HostBlackListsValidator {
         for(IpMaliciosasThread h: hilos){
             h.join();
             ocurrencesCount += h.getOcurrencias();
+            checkedListsCount += h.getCheckedListsCount();
             
         }                                                                              
         

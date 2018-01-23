@@ -14,25 +14,27 @@ import java.util.LinkedList;
  */
 public class IpMaliciosasThread extends Thread{
     
-    int ocurrencias=0;
+    int ocurrencias = 0;
     int a;
     int b;    
-    int checkedListsCount;
+    int checkedListsCount = 0;
     String ip;
     
     HostBlacklistsDataSourceFacade skds=HostBlacklistsDataSourceFacade.getInstance();
-    LinkedList<Integer> blackListOcurrences=new LinkedList<>();
+    LinkedList<Integer> blackListOcurrences;
     
-    public IpMaliciosasThread(int a, int b, String ip){
+    public IpMaliciosasThread(int a, int b, String ip, LinkedList<Integer> blackListOcurrences){
         this.a = a;
         this.b = b;
-        this.ip = ip;        
+        this.ip = ip;      
+        this.blackListOcurrences = blackListOcurrences;
     }
     
     public void run(){
-        for (int i=a;i<b;i++){            
-            checkedListsCount++;                        
-            if (skds.isInBlackListServer(i, ip)){                
+        for (int i=a;i<b ;i++){            
+            checkedListsCount++;            
+            if (skds.isInBlackListServer(i, ip)){ 
+                System.out.println(i);
                 blackListOcurrences.add(i);                
                 ocurrencias++;                
             }

@@ -6,6 +6,8 @@
 package edu.eci.arsw.blacklistvalidator;
 
 import edu.eci.arsw.spamkeywordsdatasource.HostBlacklistsDataSourceFacade;
+import edu.eci.arsw.threads.IpMaliciosasThread;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -27,28 +29,38 @@ public class HostBlackListsValidator {
      * BLACK_LIST_ALARM_COUNT, the search is finished, the host reported as
      * NOT Trustworthy, and the list of the five blacklists returned.
      * @param ipaddress suspicious host's IP address.
+     * @param n
      * @return  Blacklists numbers where the given host's IP address was found.
+     * @throws java.lang.InterruptedException
      */
-    public List<Integer> checkHost(String ipaddress){
+    public List<Integer> checkHost(String ipaddress, int n) throws InterruptedException{
         
+                
         LinkedList<Integer> blackListOcurrences=new LinkedList<>();
+        ArrayList<IpMaliciosasThread> hilos = new ArrayList<>();
         
-        int ocurrencesCount=0;
+        int ocurrencesCount=0;        
         
         HostBlacklistsDataSourceFacade skds=HostBlacklistsDataSourceFacade.getInstance();
         
-        int checkedListsCount=0;
+        int checkedListsCount=0;        
         
-        for (int i=0;i<skds.getRegisteredServersCount() && ocurrencesCount<BLACK_LIST_ALARM_COUNT;i++){
-            checkedListsCount++;
-            
-            if (skds.isInBlackListServer(i, ipaddress)){
-                
-                blackListOcurrences.add(i);
-                
-                ocurrencesCount++;
-            }
+        int rango=skds.getRegisteredServersCount()/n;        
+        
+        for(int i=0; i<n;i+=rango){
+            IpMaliciosasThread hilo = new IpMaliciosasThread(i,i+rango,ipaddress);            
+            hilos.add(hilo);            
         }
+        
+        for(IpMaliciosasThread h: hilos){
+            h.start();
+        }        
+        
+        for(IpMaliciosasThread h: hilos){
+            h.join();
+            ocurrencesCount += h.getOcurrencias();
+            
+        }                                                                              
         
         if (ocurrencesCount>=BLACK_LIST_ALARM_COUNT){
             skds.reportAsNotTrustworthy(ipaddress);
@@ -56,6 +68,8 @@ public class HostBlackListsValidator {
         else{
             skds.reportAsTrustworthy(ipaddress);
         }                
+        
+        System.out.println(ocurrencesCount);
         
         LOG.log(Level.INFO, "Checked Black Lists:{0} of {1}", new Object[]{checkedListsCount, skds.getRegisteredServersCount()});
         
